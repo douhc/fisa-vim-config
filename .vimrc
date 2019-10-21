@@ -50,6 +50,8 @@ Plug 'fisadev/vim-ctrlp-cmdpalette'
 Plug 'mattn/emmet-vim'
 " Git integration
 Plug 'motemen/git-vim'
+" Plug 'mhinz/vim-signify'
+Plug 'airblade/vim-gitgutter'
 " Tab list panel
 Plug 'kien/tabman.vim'
 " Airline
@@ -118,11 +120,20 @@ Plug 'vim-scripts/YankRing.vim'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' }
 Plug 'plasticboy/vim-markdown'
-Plug '/usr/local/opt/fzf'
+" Plug '/usr/local/opt/fzf'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
-
+Plug 'godlygeek/tabular'
+Plug 'plasticboy/vim-markdown'
+Plug 'iamcco/mathjax-support-for-mkdp'
+Plug 'iamcco/markdown-preview.vim'
+Plug 'brookhong/cscope.vim'
+Plug 'heavenshell/vim-pydocstring'
 " Plug 'ycm-core/YouCompleteMe'
 " Plug 'rdnetto/YCM-Generator', { 'branch': 'stable'}
+
+" Track the engine.
+Plug 'sirver/ultisnips'
 
 call plug#end()
 
@@ -147,14 +158,15 @@ filetype indent on
 
 " tabs and spaces handling
 set expandtab
-set tabstop=4
-set softtabstop=4
-set shiftwidth=4
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
 
 " tab length exceptions on some file types
 autocmd FileType html setlocal shiftwidth=4 tabstop=4 softtabstop=4
 autocmd FileType htmldjango setlocal shiftwidth=4 tabstop=4 softtabstop=4
 autocmd FileType javascript setlocal shiftwidth=4 tabstop=4 softtabstop=4
+autocmd FileType python setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 
 " always show status bar
 set ls=2
@@ -263,7 +275,7 @@ let g:tagbar_autofocus = 1
 " toggle nerdtree display
 map <F3> :NERDTreeToggle<CR>
 " open nerdtree with the current file selected
-nmap ,t :NERDTreeFind<CR>
+nmap ,f :NERDTreeFind<CR>
 " don;t show these file types
 let NERDTreeIgnore = ['\.pyc$', '\.pyo$']
 
@@ -275,18 +287,19 @@ map <F2> :TaskList<CR>
 
 " CtrlP ------------------------------
 
-" file finder mapping
+"" file finder mapping
 let g:ctrlp_map = ',e'
 " tags (symbols) in current file finder mapping
 nmap ,g :CtrlPBufTag<CR>
 " tags (symbols) in all files finder mapping
 nmap ,G :CtrlPBufTagAll<CR>
 " general code finder in all files mapping
-nmap ,f :CtrlPLine<CR>
+nmap ,l :CtrlPLine<CR>
 " recent files finder mapping
 nmap ,m :CtrlPMRUFiles<CR>
 " commands finder mapping
 nmap ,c :CtrlPCmdPalette<CR>
+nmap ,b :CtrlPBuffer<CR>
 " to be able to call CtrlP with default search text
 function! CtrlPWithSearchText(search_text, ctrlp_command_end)
     execute ':CtrlP' . a:ctrlp_command_end
@@ -308,15 +321,17 @@ let g:ctrlp_custom_ignore = {
   \ 'file': '\.pyc$\|\.pyo$',
   \ }
 
+" fzf ---------------------------
 " 增加键值map， 可以变更检索目录
-nmap ,E :CtrlP
-" 调用ag进行搜索提升速度，同时不使用缓存文件
-" 注意：开启ag, g:ctrlp_show_hidden和g:ctrlp_custom_ignore
-if executable('ag')
-  set grepprg=ag\ --nogroup\ --nocolor
-  let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
-  let g:ctrlp_use_caching = 0
-endif
+nmap ,E :Files
+" nmap ,e :GFiles<CR>
+" nmap ,b :Buffers<CR>
+nmap ,t :BTags<CR>
+nmap ,T :Tags<CR>
+" nmap ,l :BLines<CR>
+" nmap ,L :Lines<CR>
+" nmap ,s :Rg
+" nmap ,h :History<CR>
 
 " Syntastic ------------------------------
 
@@ -440,4 +455,44 @@ set autochdir
 "   \  'g:ycm_python_sys_path'
 "   \]
 " let g:ycm_global_ycm_extra_conf = '~/global_extra_conf.py'
+" let g:ycm_global_ycm_extra_conf='~/.vim/plugged/YouCompleteMe/third_party/ycmd/.ycm_extra_conf.py'
+set pythonthreehome=/opt/py_venv/py37
+set pythonthreedll=/opt/py_venv/py37/lib/python3.7/config-3.7m-darwin/libpython3.7m.dylib
+let g:mkdp_path_to_chrome = "open -a Google\\ Chrome"
+
+set cursorcolumn
+set cursorline
+
+" cscope setting 
+nnoremap <leader>fa :call CscopeFindInteractive(expand('<cword>'))<CR>
+nnoremap <leader>l :call ToggleLocationList()<CR>
+
+" s: Find this C symbol
+nnoremap  <leader>fs :call CscopeFind('s', expand('<cword>'))<CR>
+" g: Find this definition
+nnoremap  <leader>fg :call CscopeFind('g', expand('<cword>'))<CR>
+" d: Find functions called by this function
+nnoremap  <leader>fd :call CscopeFind('d', expand('<cword>'))<CR>
+" c: Find functions calling this function
+nnoremap  <leader>fc :call CscopeFind('c', expand('<cword>'))<CR>
+" t: Find this text string
+nnoremap  <leader>ft :call CscopeFind('t', expand('<cword>'))<CR>
+" e: Find this egrep pattern
+nnoremap  <leader>fe :call CscopeFind('e', expand('<cword>'))<CR>
+" f: Find this file
+nnoremap  <leader>ff :call CscopeFind('f', expand('<cword>'))<CR>
+" i: Find files #including this file
+nnoremap  <leader>fi :call CscopeFind('i', expand('<cword>'))<CR>
+
+
+" Trigger configuration. Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
+let g:UltiSnipsExpandTrigger="<c-j>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+
+" If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit="vertical"
+
+" pydocstring
+nmap <silent> <C-_> <Plug>(pydocstring)
 
